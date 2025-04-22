@@ -1,0 +1,195 @@
+<html >
+<head>
+  <title>Plant Paradise</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+    body { background-color:#e6f5ea; color:#2f4f4f; }
+    header { background:#2e8b57; color:white; padding:20px; text-align:center; }
+    header h1 { font-size:3em; }
+    header p { font-size:1.2em; margin-top:5px; font-style:italic; }
+    .top-actions { position:fixed; top:10px; right:10px; display:flex; gap:15px; z-index:10; }
+    .top-actions button { background:#006400; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:5px; }
+    .search-filter-container { margin-top:80px; display:flex; justify-content:space-between; padding:20px; background:#d0f0c0; }
+    .search-filter-container input, .search-filter-container select { padding:10px; border-radius:5px; border:1px solid #ccc; }
+    #notFound { display:none; text-align:center; padding:20px; font-style:italic; color:#6b8e23; }
+    .products { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; padding:20px; }
+    .product { background:white; border-radius:10px; padding:15px; box-shadow:0 2px 8px rgba(0,0,0,0.1); position:relative; text-align:center; }
+    .product img { width:100%; height:200px; object-fit:cover; border-radius:8px; }
+    .product h3 { margin:10px 0 5px; }
+    .product p { margin:5px 0; }
+    .product-actions { display:flex; justify-content:space-around; margin-top:10px; }
+    .add-to-cart, .add-to-wishlist { background:#228b22; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-size:0.9em; display:flex; align-items:center; gap:5px; }
+    .add-to-wishlist { background:#dc143c; }
+    .wishlisted { background:#ff69b4; }
+    #cart, #wishlistPanel { display:none; position:fixed; top:0; right:0; width:350px; height:100%; background:white; box-shadow:-2px 0 8px rgba(0,0,0,0.2); z-index:20; padding:20px; overflow-y:auto; }
+    #cart h2, #wishlistPanel h2 { margin-bottom:20px; text-align:center; }
+    .cart-item, .wishlist-item { display:flex; margin-bottom:15px; align-items:center; }
+    .cart-item img, .wishlist-item img { width:60px; height:60px; object-fit:cover; border-radius:5px; margin-right:10px; }
+    .cart-details, .wishlist-details { flex:1; }
+    .cart-details p, .wishlist-details p { margin:3px 0; }
+    .quantity-controls { display:flex; align-items:center; gap:5px; }
+    .quantity-controls input { width:50px; text-align:center; padding:5px; border:1px solid #ccc; border-radius:3px; }
+    .total-box { text-align:right; font-weight:bold; margin-top:20px; }
+    .checkout-btn { width:100%; padding:10px; background:#008000; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:10px; }
+    .close-btn { position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5em; color:#555; cursor:pointer; }
+    footer { background:#2e8b57; color:white; text-align:center; padding:10px; position:relative; bottom:0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Plant Paradise</h1>
+    <p>Where greenery finds a home</p>
+  </header>
+  <div class="top-actions">
+    <button id="wishlistBtn"><i class="fas fa-heart"></i> Wishlist</button>
+    <button id="cartBtn"><i class="fas fa-shopping-cart"></i> Cart</button>
+  </div>
+  <div class="search-filter-container">
+    <input type="text" id="searchBar" placeholder="Search for a plant...">
+    <select id="filterCategory">
+      <option value="">All Categories</option>
+      <option value="indoor">Indoor</option>
+      <option value="outdoor">Outdoor</option>
+      <option value="aquatic">Aquatic</option>
+    </select>
+    <select id="filterPrice">
+      <option value="">Sort by Price</option>
+      <option value="low">Low to High</option>
+      <option value="high">High to Low</option>
+    </select>
+  </div>
+  <div id="notFound">Didn't find your interest? We'll soon find it for you!</div>
+  <div class="products" id="productList"></div>
+
+  <div id="cart">
+    <button class="close-btn" onclick="hideCart()">&times;</button>
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <div class="total-box">Total: ₹<span id="cartTotal">0</span></div>
+    <button class="checkout-btn">Proceed to Checkout</button>
+  </div>
+
+  <div id="wishlistPanel">
+    <button class="close-btn" onclick="hideWishlist()">&times;</button>
+    <h2>Your Wishlist</h2>
+    <div id="wishlistItems"></div>
+  </div>
+
+  <footer>© 2025 Plant Paradise. All rights reserved.</footer>
+
+  <script>
+    const products = [
+      {id:1,name:'Money Plant',category:'indoor',price:280,img:'https://treesherbs.com/wp-content/uploads/2021/07/money-plant2.jpg'},
+      {id:2,name:'Tulsi Plant',category:'outdoor',price:150,img:'https://i.pinimg.com/originals/f1/c5/5c/f1c55cafc7ac29644b78f353fe4be439.jpg'},
+      {id:3,name:'Lotus',category:'aquatic',price:500,img:'https://thumbs.dreamstime.com/b/pink-lotus-flower-beautiful-blooming-43795131.jpg'},
+      {id:4,name:'Hibiscus',category:'outdoor',price:220,img:'https://i.pinimg.com/originals/d3/02/52/d3025270bcdd09b987cc70fbd484af86.jpg'},
+      {id:5,name:'Spider Plant',category:'indoor',price:350,img:'https://balconygardenweb.b-cdn.net/wp-content/uploads/2023/09/Chlorophytum-Comosum-Airplane-2.jpg'},
+      {id:6,name:'Water Lily',category:'aquatic',price:450,img:'https://www.vivaibambustore.com/sito/media/com_eshop/products/resized/Nymphaea_Virgo_1-800x800.jpg'},
+      {id:7,name:'Neem Sapling',category:'outdoor',price:180,img:'https://thumbs.dreamstime.com/b/fresh-green-neem-leaves-tree-fresh-green-neem-leaves-248241803.jpg'},
+      {id:8,name:'Bamboo Palm',category:'indoor',price:420,img:'https://m.media-amazon.com/images/I/61Ip-Pt6IxL._SX679_.jpg'},
+      {id:9,name:'Marigold',category:'outdoor',price:100,img:'https://3.imimg.com/data3/MC/OA/MY-10247618/natural-marigold-500x500.jpg'},
+      {id:10,name:'Indian Fern',category:'indoor',price:260,img:'https://www.plantandpot.nz/wp-content/uploads/2016/06/Boston-Fern-in-White-Dipped-Concrete-Pot.jpg'}
+    ];
+
+    let cart=[];
+    let wishlist=[];
+
+    const productList=document.getElementById('productList');
+    const notFound=document.getElementById('notFound');
+    const searchBar=document.getElementById('searchBar');
+    const filterCategory=document.getElementById('filterCategory');
+    const filterPrice=document.getElementById('filterPrice');
+    const cartPanel=document.getElementById('cart');
+    const wishlistPanel=document.getElementById('wishlistPanel');
+    const cartBtn=document.getElementById('cartBtn');
+    const wishlistBtn=document.getElementById('wishlistBtn');
+    const cartItemsEl=document.getElementById('cartItems');
+    const wishlistItemsEl=document.getElementById('wishlistItems');
+    const cartTotalEl=document.getElementById('cartTotal');
+
+    function displayProducts(items) {
+      productList.innerHTML='';
+      notFound.style.display=items.length?'none':'block';
+      items.forEach(p=>{
+        const div=document.createElement('div');div.className='product';
+        const wishClass=wishlist.includes(p.id)?'wishlisted':'';
+        div.innerHTML=`
+          <img src="${p.img}" alt="${p.name}">
+          <h3>${p.name}</h3>
+          <p>Category: ${p.category}</p>
+          <p>₹${p.price}</p>
+          <div class="product-actions">
+            <button class="add-to-cart" onclick='addToCart(${JSON.stringify(p)})'><i class="fas fa-shopping-cart"></i>Add to Cart</button>
+            <button class="add-to-wishlist ${wishClass}" onclick='toggleWishlist(${JSON.stringify(p)})'><i class="fas fa-heart"></i>${wishClass? 'Wishlisted':'Wishlist'}</button>
+          </div>`;
+        productList.appendChild(div);
+      });
+    }
+
+    function addToCart(prod) {
+      const idx=cart.findIndex(i=>i.id===prod.id);
+      if(idx>-1) cart[idx].quantity++; else cart.push({...prod,quantity:1});
+      renderCart();
+    }
+
+    function toggleWishlist(prod) {
+      const idx=wishlist.indexOf(prod.id);
+      if(idx>-1) wishlist.splice(idx,1); else wishlist.push(prod.id);
+      displayProducts(filterProducts()); renderWishlist();
+    }
+
+    function renderCart(){
+      cartItemsEl.innerHTML='';let total=0;
+      cart.forEach(item=>{
+        const div=document.createElement('div');div.className='cart-item';
+        div.innerHTML=`
+          <img src="${item.img}" alt="${item.name}">
+          <div class="cart-details"><p>${item.name}</p><p>₹${item.price} x ${item.quantity}</p></div>
+          <div class="quantity-controls"><button onclick='updateQuantity(${item.id},-1)'>-</button><input type="text" value="${item.quantity}" readonly><button onclick='updateQuantity(${item.id},1)'>+</button></div>`;
+        cartItemsEl.appendChild(div); total+=item.price*item.quantity;
+      });
+      cartTotalEl.textContent=total;
+    }
+
+    function renderWishlist(){
+      wishlistItemsEl.innerHTML='';
+      wishlist.forEach(id=>{
+        const p=products.find(x=>x.id===id);
+        const div=document.createElement('div');div.className='wishlist-item';
+        div.innerHTML=`<img src="${p.img}" alt="${p.name}"><div class="wishlist-details"><p>${p.name}</p><p>₹${p.price}</p></div>`;
+        wishlistItemsEl.appendChild(div);
+      });
+    }
+
+    function updateQuantity(id,delta){
+      const i=cart.findIndex(x=>x.id===id);
+      if(i>-1){cart[i].quantity+=delta; if(cart[i].quantity<1)cart.splice(i,1);} renderCart();
+    }
+
+    function filterProducts(){
+      const kw=searchBar.value.toLowerCase();
+      let res=products.filter(p=>p.name.toLowerCase().includes(kw));
+      const cat=filterCategory.value; if(cat) res=res.filter(p=>p.category===cat);
+      const pr=filterPrice.value; if(pr==='low')res.sort((a,b)=>a.price-b.price); else if(pr==='high')res.sort((a,b)=>b.price-a.price);
+      return res;
+    }
+
+    function showCart(){cartPanel.style.display='block';}
+    function hideCart(){cartPanel.style.display='none';}
+    function showWishlist(){wishlistPanel.style.display='block';}
+    function hideWishlist(){wishlistPanel.style.display='none';}
+
+    searchBar.oninput=()=>displayProducts(filterProducts());
+    filterCategory.onchange=()=>displayProducts(filterProducts());
+    filterPrice.onchange=()=>displayProducts(filterProducts());
+    cartBtn.onclick=showCart;
+    wishlistBtn.onclick=showWishlist;
+
+    displayProducts(products);
+    renderCart();
+    renderWishlist();
+  </script>
+</body>
+</html>
